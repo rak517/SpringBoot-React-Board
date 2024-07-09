@@ -3,13 +3,14 @@ import './App.css'
 import { Card, CardHeader, CardBody, CardText, Row, Col, Button } from 'reactstrap'
 import ModalComponent from './modal/ModalComponent'
 import update from 'immutability-helper'
+import axios from 'axios'
 
-const data = [
-  { no: 1, title: '제목1', contents: '내용1' },
-  { no: 2, title: '제목2', contents: '내용2' },
-  { no: 3, title: '제목3', contents: '내용3' },
-  { no: 4, title: '제목4', contents: '내용4' }
-]
+// const data = [
+//   { no: 1, title: '제목1', contents: '내용1' },
+//   { no: 2, title: '제목2', contents: '내용2' },
+//   { no: 3, title: '제목3', contents: '내용3' },
+//   { no: 4, title: '제목4', contents: '내용4' }
+// ]
 
 function App() {
   const [board, setBoard] = useState();
@@ -28,6 +29,18 @@ function App() {
   const [updateData, setUpdateData] = useState();
   const [updateIndex, setUpdateIndex] = useState();
 
+  useEffect(() => {
+    axios.get('http://localhost:8080/api/board/select/list')
+      .then((response) => {
+        setBoard(response.data);
+        console.log(response.data);
+      })
+      .catch((e) => {
+        console.error(e);
+      })
+  }, [])
+
+
   // 모달에 전달해주는 메서드
   const readyChnage = () => {
     setMessage('추가');
@@ -37,12 +50,17 @@ function App() {
 
   //생성 메서드, 이때 불가변성으로 생성할 수 있는 기능을 삽입한다.
   const createBoard = (data) => {
-    // front 화면에서 생성하는 것처럼 행동
-    setBoard(
-      update(board, {
-        $push: [data]
+    axios.post('http://localhost:8080/api/board/insert/board', data)
+      .then((response) => {
+        alert('게시글이 추가되었습니다.');
+        setBoard(
+          update(board, {
+            $push: [data],
+          })
+        )
+      }).catch((e) => {
+        console.error(e);
       })
-    )
     modalViewToggle();
   }
 
@@ -57,28 +75,39 @@ function App() {
 
   // 수정 이벤트
   const updateBoard = (data, index) => {
-    setBoard(
-      update(board, {
-        $merge: { [index]: data },
+    axios.post('http://localhost:8080/api/board/update/board', data)
+      .then((response) => {
+        alert('게시글이 수정되었습니다.');
+        setBoard(
+          update(board, {
+            $merge: { [index]: data }
+          })
+        )
       })
-    )
+      .catch((e) => {
+        console.error(e);
+      })
     modalViewToggle();
-    setIsStateChange(!isStateChange); // state 값 변화시 렌더링을 위해 추가 
+    setIsStateChange(!isStateChange);
   }
 
   // 삭제 메서드
   const deleteBoard = (index) => {
-    setBoard(
-      update(board, {
-        $splice: [[index, 1]]
+    const deleteData = board[index];
+    axios.post('http://localhost:8080/api/board/delete/board', deleteData)
+      .then((response) => {
+        alert('게시글이 삭제되었습니다.');
+        setBoard(
+          update(board, {
+            $splice: [[index, 1]]
+          })
+        )
       })
-    )
+      .catch((e) => {
+        console.error(e);
+      })
   }
 
-
-  useEffect(() => {
-    setBoard(data);
-  }, [])
 
   return (
     <div className='container'>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.zeus.board_back.mapper.BoardMapper">
+    <select id="selectList" resultType="Board">
+        SELECT * FROM board
+    </select>
+
+    <insert id="insertBoard">
+        insert into board (no,title,contents) values(board_seq.nextval,#{param1},#{param2})
+    </insert>
+
+    <update id="updateBoard" parameterType="Board">
+        update board set title=#{title}, contents=#{contents} where no=#{no}
+    </update>
+
+    <delete id="deleteBoard">
+        delete from board where no=#{no}
+    </delete>
+</mapper>
