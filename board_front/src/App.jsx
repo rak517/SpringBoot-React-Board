@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import './App.css'
 import { Card, CardHeader, CardBody, CardText, Row, Col, Button } from 'reactstrap'
 import ModalComponent from './modal/ModalComponent'
 import update from 'immutability-helper'
 import axios from 'axios'
+import ReactPaginate from 'react-paginate'
 
 // const data = [
 //   { no: 1, title: '제목1', contents: '내용1' },
@@ -29,6 +30,10 @@ function App() {
   const [updateData, setUpdateData] = useState();
   const [updateIndex, setUpdateIndex] = useState();
 
+  //페이지네이션 상태
+  const [currentPage, setCurrentPage] = useState(0);
+  const itemsPerPage = 5;
+
   useEffect(() => {
     axios.get('http://localhost:8080/api/board/select/list')
       .then((response) => {
@@ -38,7 +43,7 @@ function App() {
       .catch((e) => {
         console.error(e);
       })
-  }, [])
+  }, [isStateChange])
 
 
   // 모달에 전달해주는 메서드
@@ -48,7 +53,7 @@ function App() {
     modalViewToggle();
   }
 
-  //생성 메서드, 이때 불가변성으로 생성할 수 있는 기능을 삽입한다.
+  //생성 메서드, 원본을 변경하지 않고 새로운 배열을 생성
   const createBoard = (data) => {
     axios.post('http://localhost:8080/api/board/insert/board', data)
       .then((response) => {
@@ -108,30 +113,41 @@ function App() {
       })
   }
 
+  const handlePageClick = (e) => {
+    setCurrentPage(e.selected);
+  }
+
+  const offset = currentPage * itemsPerPage;
+  const currentPageData = Array.isArray(board) ? board.slice(offset, offset + itemsPerPage) : [];
+  const pageCount = Array.isArray(board) ? Math.ceil(board.length / itemsPerPage) : 0;
 
   return (
     <div className='container'>
       <h1>게시판 프로젝트</h1>
       <br /><br /><br /><br />
       {/* board?.map >> board가 null이나 undefined일 경우 map 호출안하고 undefined 반환 */}
-      {board?.map((board, index) => (
-        <Card key={index} className='my-2' color='primary' outline>
-          <CardHeader>{board?.title}</CardHeader>
-          <CardBody>
-            <CardText>{board?.contents}</CardText>
-            <br />
-            <br />
-            <Row>
-              <Col sm={{ offset: 3, size: 'auto' }}>
-                <Button color='primary' onClick={() => readyUpdate(board, index)}>수정</Button>
-              </Col>
-              <Col sm={{ offset: 4, size: 'auto' }}>
-                <Button color='danger' onClick={() => deleteBoard(index)}>삭제</Button>
-              </Col>
-            </Row>
-          </CardBody>
-        </Card>
-      ))}
+      {currentPageData.length > 0 ? (
+        currentPageData.map((board, index) => (
+          <Card key={index} className='my-2' color='primary' outline>
+            <CardHeader>{board?.title}</CardHeader>
+            <CardBody>
+              <CardText>{board?.contents}</CardText>
+              <br />
+              <br />
+              <Row>
+                <Col sm={{ offset: 3, size: 'auto' }}>
+                  <Button color='primary' onClick={() => readyUpdate(board, index)}>수정</Button>
+                </Col>
+                <Col sm={{ offset: 4, size: 'auto' }}>
+                  <Button color='danger' onClick={() => deleteBoard(index)}>삭제</Button>
+                </Col>
+              </Row>
+            </CardBody>
+          </Card>
+        ))
+      ) : (
+        <p>게시글이 없습니다.</p>
+      )}
       <br />
       <br />
       <br />
@@ -148,6 +164,17 @@ function App() {
         updateBoard={updateBoard}
         updateData={updateData}
         updateIndex={updateIndex}
+      />
+      <ReactPaginate
+        previousLabel={'이전'}
+        nextLabel={'다음'}
+        breakLabel={'...'}
+        pageCount={pageCount}
+        marginPagesDisplayed={2}
+        pageRangeDisplayed={5}
+        onPageChange={handlePageClick}
+        containerClassName={'pagination'}
+        activeClassName={'active'}
       />
     </div>
   )
